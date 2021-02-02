@@ -1,4 +1,4 @@
-from tkinter import messagebox as msg
+from tkinter import Tk, messagebox as msg
 from queue import PriorityQueue
 import pygame
 from pygame.constants import KEYDOWN, K_SPACE, K_c
@@ -108,6 +108,10 @@ def BFS(draw,start,end):
         draw()
         if current!=start:
             current.make_closed()
+    if not queue:
+        root = Tk()
+        root.withdraw()
+        msg.showinfo('No Solution!','Ther was no Solution!')
     return False
 def DFS(draw,start,end):
     stack=[start]
@@ -132,7 +136,12 @@ def DFS(draw,start,end):
         draw()
         if current!=start:
             current.make_closed()
-    return False
+    if not stack:
+        root = Tk()
+        root.withdraw()
+        msg.showinfo('No Solution!','Ther was no Solution!')
+        return False
+
 
 def get_clicked_pos(pos, rows, width):
     gap = width // rows
@@ -210,8 +219,8 @@ def main(win, width):
                     for row in grid:
                         for spot in row:
                             spot.update_neighbor(grid)
-                    # BFS(lambda: draw(win, grid, Rows, width), start, end)
-                    DFS(lambda: draw(win, grid, Rows, width), start, end)
+                    BFS(lambda: draw(win, grid, Rows, width), start, end)
+                    # DFS(lambda: draw(win, grid, Rows, width), start, end)
                 if event.key == K_c:
                     start = None
                     end = None
