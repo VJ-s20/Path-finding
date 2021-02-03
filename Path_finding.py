@@ -65,7 +65,7 @@ class Spot:
         pygame.draw.rect(
             win, self.color, (self.x, self.y, self.width, self.width))
 
-    def update_neighbor(self, grid,diagonals=False):
+    def update_neighbor(self, grid, diagonals=False):
         # Down
         if self.row < self.total_rows-1 and not grid[self.row+1][self.col].is_Barrier():
             self.neighbor.append(grid[self.row+1][self.col])
@@ -85,18 +85,24 @@ class Spot:
                 self.neighbor.append(grid[self.row+1][self.col+1])
             if 0 < self.row < self.total_rows-1 and 0 < self.col < self.total_rows-1 and not grid[self.row-1][self.col-1].is_Barrier():
                 self.neighbor.append(grid[self.row-1][self.col-1])
+            if 0 < self.row < self.total_rows-1 and 0 < self.col < self.total_rows-1 and not grid[self.row-1][self.col+1].is_Barrier():
+                self.neighbor.append(grid[self.row-1][self.col+1])
+            if 0 < self.row < self.total_rows-1 and 0 < self.col < self.total_rows-1 and not grid[self.row+1][self.col-1].is_Barrier():
+                self.neighbor.append(grid[self.row+1][self.col-1])
+
+
 def showInfo():
     root = Tk()
     root.withdraw()
     msg.showinfo('No Solution!', 'There was no Solution!')
     print('NO Solution!')
 
+
 def reconstruct_path(draw, parent, current):
     while current in parent:
         current = parent[current]
         current.make_path()
         draw()
-
 
 
 def get_clicked_pos(pos, rows, width):
@@ -136,12 +142,15 @@ def draw(win, grid, rows, width):
     draw_grid(win, rows, width)
     pygame.display.update()
 
+
 def h(p1, p2):
     x1, y1 = p1
     x2, y2 = p2
     return abs(x1-x2)+abs(y1-y2)
 
-#* Main Algorithms
+# * Main Algorithms
+
+
 def Astar(draw, grid, start, end):
     count = 0
     parent = {}
@@ -185,39 +194,39 @@ def Astar(draw, grid, start, end):
     return False
 
 
-def Dijsktra(draw,grid,start,end):
-    count=0
-    shortest_distance={spot:float('inf') for row in grid for spot in row}
-    shortest_distance[start]=0
-    parent={}
-    open_set=PriorityQueue()
-    open_set.put((count,start))
+def Dijsktra(draw, grid, start, end):
+    count = 0
+    shortest_distance = {spot: float('inf') for row in grid for spot in row}
+    shortest_distance[start] = 0
+    parent = {}
+    open_set = PriorityQueue()
+    open_set.put((count, start))
     while not open_set.empty():
         for event in pygame.event.get():
-            if event.type==pygame.QUIT:
+            if event.type == pygame.QUIT:
                 pygame.quit()
-        minNode=open_set.get()[1]
-        if minNode==end:
-            reconstruct_path(draw,parent,minNode)
+        minNode = open_set.get()[1]
+        if minNode == end:
+            reconstruct_path(draw, parent, minNode)
             start.make_start()
             end.make_end()
             return True
         for neighbor in minNode.neighbor:
-            temp_node=shortest_distance[minNode]+1
-            if temp_node<shortest_distance[neighbor]:
-                shortest_distance[neighbor]=temp_node
-                parent[neighbor]=minNode
-                count+=1
-                open_set.put((count,neighbor))
+            temp_node = shortest_distance[minNode]+1
+            if temp_node < shortest_distance[neighbor]:
+                shortest_distance[neighbor] = temp_node
+                parent[neighbor] = minNode
+                count += 1
+                open_set.put((count, neighbor))
                 neighbor.make_open()
         draw()
-        if minNode!=start:
+        if minNode != start:
             minNode.make_closed()
     if open_set.empty():
         showInfo()
     return False
 
-    
+
 def BFS(draw, start, end):
     queue = [start]
     parent = {}
@@ -244,6 +253,7 @@ def BFS(draw, start, end):
     if not queue:
         showInfo()
     return False
+
 
 def DFS(draw, start, end):
     stack = [start]
@@ -309,7 +319,7 @@ def main(win, width):
                 if event.key == pygame.K_SPACE:
                     for row in grid:
                         for spot in row:
-                            spot.update_neighbor(grid,False)
+                            spot.update_neighbor(grid, False)
                     # BFS(lambda: draw(win, grid, Rows, width), start, end)
                     # DFS(lambda: draw(win, grid, Rows, width), start, end)
                     # Astar(lambda: draw(win, grid, Rows, width), grid, start, end)
