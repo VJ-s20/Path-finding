@@ -1,7 +1,6 @@
 from tkinter import Tk, messagebox as msg
 from queue import PriorityQueue
 import pygame
-from pygame.constants import KEYDOWN, K_SPACE, K_c
 
 
 WIDTH = 700
@@ -66,7 +65,7 @@ class Spot:
         pygame.draw.rect(
             win, self.color, (self.x, self.y, self.width, self.width))
 
-    def update_neighbor(self, grid):
+    def update_neighbor(self, grid,diagonals=False):
         # Down
         if self.row < self.total_rows-1 and not grid[self.row+1][self.col].is_Barrier():
             self.neighbor.append(grid[self.row+1][self.col])
@@ -80,10 +79,17 @@ class Spot:
 
         if self.col > 0 and not grid[self.row][self.col-1].is_Barrier():  # Left
             self.neighbor.append(grid[self.row][self.col-1])
-
-    def __ln__(self, other):
-        return False
-
+        # Diagonal
+        if diagonals:
+            if 0 < self.row < self.total_rows-1 and 0 < self.col < self.total_rows-1 and not grid[self.row+1][self.col+1].is_Barrier():
+                self.neighbor.append(grid[self.row+1][self.col+1])
+            if 0 < self.row < self.total_rows-1 and 0 < self.col < self.total_rows-1 and not grid[self.row-1][self.col-1].is_Barrier():
+                self.neighbor.append(grid[self.row-1][self.col-1])
+def showInfo():
+    root = Tk()
+    root.withdraw()
+    msg.showinfo('No Solution!', 'There was no Solution!')
+    print('NO Solution!')
 
 def reconstruct_path(draw, parent, current):
     while current in parent:
@@ -91,112 +97,6 @@ def reconstruct_path(draw, parent, current):
         current.make_path()
         draw()
 
-
-def h(p1, p2):
-    x1, y1 = p1
-    x2, y2 = p2
-    return abs(x1-x2)+abs(y1-y2)
-
-
-def Astar(draw, grid, start, end):
-    count = 0
-    parent = {}
-    open_set = PriorityQueue()
-    open_set.put((0, count, start))
-    # The actual value if the node
-    g_score = {spot: float('inf') for row in grid for spot in row}
-    g_score[start] = 0
-    f_score = {spot: float('inf') for row in grid for spot in row}
-    # The heuristic value or the predicted distance form the start and the end
-    f_score[start] = h(start.get_pos(), end.get_pos())
-    open_set_hash = {start}
-    while not open_set.empty():
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-        current = open_set.get()[2]
-        open_set_hash.remove(current)
-        if current == end:
-            reconstruct_path(draw, parent, current)
-            start.make_start()
-            end.make_end()
-            return True
-        for neighbor in current.neighbor:
-            temp_g_score = g_score[current]+1
-            if temp_g_score < g_score[neighbor]:
-                parent[neighbor] = current
-                g_score[neighbor] = temp_g_score
-                f_score[neighbor] = temp_g_score + \
-                    h(start.get_pos(), end.get_pos())
-                if neighbor not in open_set_hash:
-                    count += 1
-                    open_set.put((f_score[neighbor], count, neighbor))
-                    open_set_hash.add(neighbor)
-                    neighbor.make_open()
-        draw()
-        if current != start:
-            current.make_closed()
-    return False
-
-
-def BFS(draw, start, end):
-    queue = [start]
-    parent = {}
-    open_set = {start}
-    while queue:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-        current = queue.pop(0)
-        if current == end:
-            reconstruct_path(draw, parent, current)
-            start.make_start()
-            end.make_end()
-            return True
-        for neighbor in current.neighbor:
-            if neighbor not in open_set:
-                parent[neighbor] = current
-                queue.append(neighbor)
-                open_set.add(neighbor)
-                neighbor.make_open()
-        draw()
-        if current != start:
-            current.make_closed()
-    if not queue:
-        root = Tk()
-        root.withdraw()
-        msg.showinfo('No Solution!', 'Ther was no Solution!')
-    return False
-
-
-def DFS(draw, start, end):
-    stack = [start]
-    parent = {}
-    open_set = {start}
-    while stack:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-        current = stack.pop()
-        if current == end:
-            reconstruct_path(draw, parent, current)
-            start.make_start()
-            end.make_end()
-            return True
-        for neighbor in current.neighbor:
-            if neighbor not in open_set:
-                parent[neighbor] = current
-                stack.append(neighbor)
-                open_set.add(neighbor)
-                neighbor.make_open()
-        draw()
-        if current != start:
-            current.make_closed()
-    if not stack:
-        root = Tk()
-        root.withdraw()
-        msg.showinfo('No Solution!', 'Ther was no Solution!')
-        return False
 
 
 def get_clicked_pos(pos, rows, width):
@@ -236,6 +136,142 @@ def draw(win, grid, rows, width):
     draw_grid(win, rows, width)
     pygame.display.update()
 
+def h(p1, p2):
+    x1, y1 = p1
+    x2, y2 = p2
+    return abs(x1-x2)+abs(y1-y2)
+
+#* Main Algorithms
+def Astar(draw, grid, start, end):
+    count = 0
+    parent = {}
+    open_set = PriorityQueue()
+    open_set.put((0, count, start))
+    # The actual value if the node
+    g_score = {spot: float('inf') for row in grid for spot in row}
+    g_score[start] = 0
+    f_score = {spot: float('inf') for row in grid for spot in row}
+    # The heuristic value or the predicted distance form the start and the end
+    f_score[start] = h(start.get_pos(), end.get_pos())
+    open_set_hash = {start}
+    while not open_set.empty():
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+        current = open_set.get()[2]
+        open_set_hash.remove(current)
+        if current == end:
+            reconstruct_path(draw, parent, current)
+            start.make_start()
+            end.make_end()
+            return True
+        for neighbor in current.neighbor:
+            temp_g_score = g_score[current]+1
+            if temp_g_score < g_score[neighbor]:
+                parent[neighbor] = current
+                g_score[neighbor] = temp_g_score
+                f_score[neighbor] = temp_g_score + \
+                    h(neighbor.get_pos(), end.get_pos())
+                if neighbor not in open_set_hash:
+                    count += 1
+                    open_set.put((f_score[neighbor], count, neighbor))
+                    open_set_hash.add(neighbor)
+                    neighbor.make_open()
+        draw()
+        if current != start:
+            current.make_closed()
+    if open_set.empty():
+        showInfo()
+    return False
+
+
+def Dijsktra(draw,grid,start,end):
+    count=0
+    shortest_distance={spot:float('inf') for row in grid for spot in row}
+    shortest_distance[start]=0
+    parent={}
+    open_set=PriorityQueue()
+    open_set.put((count,start))
+    while not open_set.empty():
+        for event in pygame.event.get():
+            if event.type==pygame.QUIT:
+                pygame.quit()
+        minNode=open_set.get()[1]
+        if minNode==end:
+            reconstruct_path(draw,parent,minNode)
+            start.make_start()
+            end.make_end()
+            return True
+        for neighbor in minNode.neighbor:
+            temp_node=shortest_distance[minNode]+1
+            if temp_node<shortest_distance[neighbor]:
+                shortest_distance[neighbor]=temp_node
+                parent[neighbor]=minNode
+                count+=1
+                open_set.put((count,neighbor))
+                neighbor.make_open()
+        draw()
+        if minNode!=start:
+            minNode.make_closed()
+    if open_set.empty():
+        showInfo()
+    return False
+
+    
+def BFS(draw, start, end):
+    queue = [start]
+    parent = {}
+    open_set = {start}
+    while queue:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+        current = queue.pop(0)
+        if current == end:
+            reconstruct_path(draw, parent, current)
+            start.make_start()
+            end.make_end()
+            return True
+        for neighbor in current.neighbor:
+            if neighbor not in open_set:
+                parent[neighbor] = current
+                queue.append(neighbor)
+                open_set.add(neighbor)
+                neighbor.make_open()
+        draw()
+        if current != start:
+            current.make_closed()
+    if not queue:
+        showInfo()
+    return False
+
+def DFS(draw, start, end):
+    stack = [start]
+    parent = {}
+    open_set = {start}
+    while stack:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+        current = stack.pop()
+        if current == end:
+            reconstruct_path(draw, parent, current)
+            start.make_start()
+            end.make_end()
+            return True
+        for neighbor in current.neighbor:
+            if neighbor not in open_set:
+                parent[neighbor] = current
+                stack.append(neighbor)
+                open_set.add(neighbor)
+                neighbor.make_open()
+        draw()
+        if current != start:
+            current.make_closed()
+    if not stack:
+        showInfo()
+        return False
+
 
 def main(win, width):
     Rows = 50
@@ -269,16 +305,17 @@ def main(win, width):
                     start = None
                 if spot == end:
                     end = None
-            if event.type == KEYDOWN:
-                if event.key == K_SPACE:
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
                     for row in grid:
                         for spot in row:
-                            spot.update_neighbor(grid)
+                            spot.update_neighbor(grid,False)
                     # BFS(lambda: draw(win, grid, Rows, width), start, end)
                     # DFS(lambda: draw(win, grid, Rows, width), start, end)
-                    Astar(lambda: draw(win, grid, Rows, width), grid, start, end)
+                    # Astar(lambda: draw(win, grid, Rows, width), grid, start, end)
+                    Dijsktra(lambda: draw(win, grid, Rows, width), grid, start, end)
 
-                if event.key == K_c:
+                if event.key == pygame.K_c:
                     start = None
                     end = None
                     grid = make_grid(Rows, width)
