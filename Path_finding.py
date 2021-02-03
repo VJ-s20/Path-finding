@@ -5,7 +5,7 @@ import pygame
 
 WIDTH = 700
 SCREEN = pygame.display.set_mode((WIDTH, WIDTH))
-pygame.display.set_caption('Path Visualization')
+pygame.display.set_caption('Path Finding Visualization')
 
 # Required colors
 RED = (255, 0, 0)
@@ -37,7 +37,7 @@ class Spot:
     def is_Barrier(self):
         return self.color == BLACK
 
-    def is_empty(self):
+    def is_valid(self):
         return self.color == WHITE
 
     def make_open(self):
@@ -294,7 +294,7 @@ def main(win, width):
                 elif not end and spot != start:
                     end = spot
                     end.make_end()
-                elif spot != start and spot != end:
+                elif spot != start and spot != end and spot.is_valid():
                     spot.make_Barrier()
             if pygame.mouse.get_pressed()[2]:
                 pos = pygame.mouse.get_pos()
