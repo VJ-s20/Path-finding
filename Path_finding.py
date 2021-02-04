@@ -79,23 +79,23 @@ class Spot:
 
         if self.col > 0 and not grid[self.row][self.col-1].is_Barrier():  # Left
             self.neighbor.append(grid[self.row][self.col-1])
-        # Diagonal
+        # Diagonal's
         if diagonals:
-            if 0 < self.row < self.total_rows-1 and 0 < self.col < self.total_rows-1 and not grid[self.row+1][self.col+1].is_Barrier():
+            if 0 < self.row < self.total_rows-1 and 0 < self.col < self.total_rows-1 and not grid[self.row+1][self.col+1].is_Barrier(): # Main Diagonal Down
                 self.neighbor.append(grid[self.row+1][self.col+1])
-            if 0 < self.row < self.total_rows-1 and 0 < self.col < self.total_rows-1 and not grid[self.row-1][self.col-1].is_Barrier():
+            if 0 < self.row < self.total_rows-1 and 0 < self.col < self.total_rows-1 and not grid[self.row-1][self.col-1].is_Barrier(): # Main Diagonal Up
                 self.neighbor.append(grid[self.row-1][self.col-1])
-            if 0 < self.row < self.total_rows-1 and 0 < self.col < self.total_rows-1 and not grid[self.row-1][self.col+1].is_Barrier():
+            if 0 < self.row < self.total_rows-1 and 0 < self.col < self.total_rows-1 and not grid[self.row-1][self.col+1].is_Barrier(): # Anti Diagonal Up
                 self.neighbor.append(grid[self.row-1][self.col+1])
-            if 0 < self.row < self.total_rows-1 and 0 < self.col < self.total_rows-1 and not grid[self.row+1][self.col-1].is_Barrier():
+            if 0 < self.row < self.total_rows-1 and 0 < self.col < self.total_rows-1 and not grid[self.row+1][self.col-1].is_Barrier(): # Anti Diagonal Down
                 self.neighbor.append(grid[self.row+1][self.col-1])
 
 
 def showInfo():
     root = Tk()
     root.withdraw()
-    msg.showinfo('No Solution!', 'There was no Solution!')
-    print('NO Solution!')
+    msg.showerror('No Solution!', 'There was no Possible Solution!')
+    print('NO Possible Solution!')
 
 
 def reconstruct_path(draw, parent, current):
@@ -315,16 +315,19 @@ def main(win, width):
                     start = None
                 if spot == end:
                     end = None
-            if event.type == pygame.KEYDOWN:
+            if event.type == pygame.KEYDOWN and start and end:
                 if event.key == pygame.K_SPACE:
                     for row in grid:
                         for spot in row:
                             spot.update_neighbor(grid, False)
-                    # BFS(lambda: draw(win, grid, Rows, width), start, end)
-                    # DFS(lambda: draw(win, grid, Rows, width), start, end)
+                    BFS(lambda: draw(win, grid, Rows, width), start, end)
                     # Astar(lambda: draw(win, grid, Rows, width), grid, start, end)
+                elif event.key==pygame.K_RETURN:
+                    for row in grid:
+                        for spot in row:
+                            spot.update_neighbor(grid,False)
+                    # DFS(lambda: draw(win, grid, Rows, width), start, end)
                     Dijsktra(lambda: draw(win, grid, Rows, width), grid, start, end)
-
                 if event.key == pygame.K_c:
                     start = None
                     end = None
