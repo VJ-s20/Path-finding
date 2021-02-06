@@ -1,8 +1,12 @@
-from tkinter import Tk, messagebox as msg
+from tkinter import Grid, Tk, messagebox as msg
 from queue import PriorityQueue
 import pygame
+import sys
+from pygame.locals import *
 
-
+pygame.init()
+font = pygame.font.SysFont(None, 50)
+mainClock = pygame.time.Clock()
 WIDTH = 700
 SCREEN = pygame.display.set_mode((WIDTH, WIDTH))
 pygame.display.set_caption('Path Finding Visualization')
@@ -81,13 +85,17 @@ class Spot:
             self.neighbor.append(grid[self.row][self.col-1])
         # Diagonal's
         if diagonals:
-            if 0 < self.row < self.total_rows-1 and 0 < self.col < self.total_rows-1 and not grid[self.row+1][self.col+1].is_Barrier(): # Main Diagonal Down
+            # Main Diagonal Down
+            if 0 < self.row < self.total_rows-1 and 0 < self.col < self.total_rows-1 and not grid[self.row+1][self.col+1].is_Barrier():
                 self.neighbor.append(grid[self.row+1][self.col+1])
-            if 0 < self.row < self.total_rows-1 and 0 < self.col < self.total_rows-1 and not grid[self.row-1][self.col-1].is_Barrier(): # Main Diagonal Up
+            # Main Diagonal Up
+            if 0 < self.row < self.total_rows-1 and 0 < self.col < self.total_rows-1 and not grid[self.row-1][self.col-1].is_Barrier():
                 self.neighbor.append(grid[self.row-1][self.col-1])
-            if 0 < self.row < self.total_rows-1 and 0 < self.col < self.total_rows-1 and not grid[self.row-1][self.col+1].is_Barrier(): # Anti Diagonal Up
+            # Anti Diagonal Up
+            if 0 < self.row < self.total_rows-1 and 0 < self.col < self.total_rows-1 and not grid[self.row-1][self.col+1].is_Barrier():
                 self.neighbor.append(grid[self.row-1][self.col+1])
-            if 0 < self.row < self.total_rows-1 and 0 < self.col < self.total_rows-1 and not grid[self.row+1][self.col-1].is_Barrier(): # Anti Diagonal Down
+            # Anti Diagonal Down
+            if 0 < self.row < self.total_rows-1 and 0 < self.col < self.total_rows-1 and not grid[self.row+1][self.col-1].is_Barrier():
                 self.neighbor.append(grid[self.row+1][self.col-1])
 
 
@@ -283,7 +291,7 @@ def DFS(draw, start, end):
         return False
 
 
-def main(win, width):
+def main(win, width, Algorithm):
     Rows = 50
     grid = make_grid(Rows, width)
     start = None
@@ -315,24 +323,93 @@ def main(win, width):
                     start = None
                 if spot == end:
                     end = None
-            if event.type == pygame.KEYDOWN and start and end:
-                if event.key == pygame.K_SPACE:
-                    for row in grid:
-                        for spot in row:
-                            spot.update_neighbor(grid, False)
-                    BFS(lambda: draw(win, grid, Rows, width), start, end)
-                    # Astar(lambda: draw(win, grid, Rows, width), grid, start, end)
-                elif event.key==pygame.K_RETURN:
-                    for row in grid:
-                        for spot in row:
-                            spot.update_neighbor(grid,False)
-                    # DFS(lambda: draw(win, grid, Rows, width), start, end)
-                    Dijsktra(lambda: draw(win, grid, Rows, width), grid, start, end)
+            if event.type == pygame.KEYDOWN:
+                try:
+                    if event.key == pygame.K_SPACE and start and end:
+                        for row in grid:
+                            for spot in row:
+                                spot.update_neighbor(grid, False)
+                        Algorithm(lambda: draw(win, grid, Rows, width), start, end)
+                    elif event.key == pygame.K_RETURN:
+                        for row in grid:
+                            for spot in row:
+                                spot.update_neighbor(grid, False)
+                        Algorithm(lambda: draw(win, grid, Rows, width), grid, start, end)
+                except:
+                    print('Wrong Button!')
                 if event.key == pygame.K_c:
                     start = None
                     end = None
                     grid = make_grid(Rows, width)
-    pygame.quit()
+                if event.key == K_ESCAPE:
+                    run = False
+            mainClock.tick(60)
 
 
-main(SCREEN, WIDTH)
+# Options Menu---------------------------------------- #
+    
+
+
+def draw_text(text, font, color, surface, x, y):
+    textobj = font.render(text, 1, color)
+    textrect = textobj.get_rect()
+    textrect.topleft = (x, y)
+    surface.blit(textobj, textrect)
+
+
+def Algorithm_menu(screen, width):
+    picture=pygame.image.load('Images/start.JPG').convert_alpha()
+    picture = pygame.transform.scale(picture, (width, width))
+    click = False
+    while True:
+        screen.fill(BLACK)
+        screen.blit(picture,(0,0))
+        draw_text('Choose One Algorithm', font, BLACK, screen, 40, 20)
+
+        mx, my = pygame.mouse.get_pos()
+        x_axis=80
+        button_1 = pygame.Rect(x_axis, 100, 200, 50)
+        button_2 = pygame.Rect(x_axis, 200, 200, 50)
+        button_3 = pygame.Rect(x_axis, 300, 200, 50)
+        button_4 = pygame.Rect(x_axis, 400, 200, 50)
+        if button_1.collidepoint((mx, my)):
+            if click:
+                main(screen, width, lambda draw, start, end: BFS(draw, start, end))
+
+        if button_2.collidepoint((mx, my)):
+            if click:
+                main(screen, width, lambda draw, start, end: DFS(draw, start, end))
+        if button_3.collidepoint((mx, my)):
+            if click:
+                main(screen, width, lambda draw, grid, start, end: Dijsktra(draw, grid,start, end))
+        if button_4.collidepoint((mx, my)):
+            if click:
+                main(screen, width, lambda draw, grid, start, end: Astar(draw, grid, start, end))
+        pygame.draw.rect(screen, (255, 0, 0), button_1)
+        pygame.draw.rect(screen, (255, 0, 0), button_2)
+        pygame.draw.rect(screen, (255, 0, 0), button_3)
+        pygame.draw.rect(screen, (255, 0, 0), button_4)
+        draw_text('BFS', font, (255, 255, 255), screen, x_axis, 100)
+        draw_text('DFS', font, (255, 255, 255), screen, x_axis, 200)
+        draw_text('Dijsktra', font, (255, 255, 255), screen, x_axis,300)
+        draw_text('Astar', font, (255, 255, 255), screen, x_axis, 400)
+
+        click = False
+        for event in pygame.event.get():
+
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == KEYDOWN:
+                if event.key == K_ESCAPE:
+                    pygame.quit()
+                    sys.exit()
+            if event.type == MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    click = True
+
+        pygame.display.update()
+        mainClock.tick(60)
+
+
+Algorithm_menu(SCREEN, WIDTH)
